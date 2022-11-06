@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,28 +13,43 @@ type PlayerStore interface {
 	RecordWin(name string)
 }
 
+// Player stores a name with a number of wins.
+type Player struct {
+	Name string
+	Wins int
+}
+
 // PlayerServer is a HTTP interface for player information.
 type PlayerServer struct {
 	store PlayerStore
-  http.Handler
+	http.Handler
 }
 
+// NewPlayerServer creates a PlayerServer with routing configured.
 func NewPlayerServer(store PlayerStore) *PlayerServer {
-  p := new(PlayerServer)
+	p := new(PlayerServer)
 
-  p.store = store
+	p.store = store
 
-  router := http.NewServeMux()
-  router.Handle("/league", http.HandlerFunc(p.leagueHandler))
-  router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+	router := http.NewServeMux()
+	router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
 
-  p.Handler = router
+	p.Handler = router
 
-  return p
+	return p
 }
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(p.getLeagueTable())
+
 	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) getLeagueTable() []Player {
+  return []Player{
+		{Name: "Chris", Wins: 20},
+	}
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
